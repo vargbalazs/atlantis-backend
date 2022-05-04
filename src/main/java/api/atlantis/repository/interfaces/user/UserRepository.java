@@ -1,0 +1,11 @@
+package api.atlantis.repository.interfaces.user;
+
+import api.atlantis.domain.user.AppUser;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface UserRepository extends JpaRepository<AppUser, Long> {
+    AppUser findAppUserByUserName(String userName);
+    AppUser findAppUserByUserEmail(String userEmail);
+}
