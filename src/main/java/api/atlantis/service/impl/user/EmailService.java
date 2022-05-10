@@ -1,6 +1,9 @@
 package api.atlantis.service.impl.user;
 
+import api.atlantis.utility.Translator;
 import com.sun.mail.smtp.SMTPTransport;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.mail.*;
@@ -14,63 +17,39 @@ import static api.atlantis.constant.EmailConstant.*;
 @Service
 public class EmailService {
 
-//    private Session getEmailSession() {
-//        Properties properties = System.getProperties();
-//        properties.put(SMTP_HOST, MAILTRAP_SMTP_SERVER);
-//        properties.put(SMTP_AUTH, true);
-//        properties.put(SMTP_PORT, DEFAULT_PORT);
-//        properties.put(SMTP_STARTTLS_ENABLE, true);
-//        properties.put(SMTP_STARTTLS_REQUIRED, true);
-//
-//        return Session.getInstance(properties, null);
-//    }
-//
-//    private Message createEmail(String firstName, String password, String email) throws MessagingException {
-//        Message message = new MimeMessage(getEmailSession());
-//        message.setFrom(new InternetAddress(FROM_EMAIL));
-//        message.setRecipient(Message.RecipientType.TO, new InternetAddress(email, false));
-//        message.setSubject(EMAIL_SUBJECT);
-//        message.setText("Hello " + firstName + ", \n \n Your new account password is: " + password + "\n \n " +
-//                "The support team");
-//        message.setSentDate(new Date());
-//        message.saveChanges();
-//
-//        return message;
-//    }
-//
-//    public void sendNewPasswordEmail(String firstName, String password, String email) throws MessagingException {
-//        Message message = createEmail(firstName, password, email);
-//        SMTPTransport smtpTransport = (SMTPTransport) getEmailSession().getTransport(SIMPLE_MAIL_TRANSFER_PROTOCOL);
-//        smtpTransport.connect(MAILTRAP_SMTP_SERVER, USERNAME, PASSWORD);
-//        smtpTransport.sendMessage(message, message.getAllRecipients());
-//        smtpTransport.close();
-//    }
-
+    @Autowired
+    private Environment env;
     public void sendNewPasswordEmail(String firstName, String password, String email) {
 
         Properties props = new Properties();
         props.put(SMTP_AUTH, "true");
         props.put(SMTP_STARTTLS_ENABLE, "true");
-        props.put(SMTP_HOST, MAILTRAP_SMTP_SERVER);
+        props.put(SMTP_HOST, env.getProperty("mail.host"));
         props.put(SMTP_PORT, DEFAULT_PORT);
 
         Session session = Session.getInstance(props,
                 new javax.mail.Authenticator() {
                     protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(USERNAME, PASSWORD);
+                        return new PasswordAuthentication(env.getProperty("mail.username"), env.getProperty("mail.password"));
                     }
                 });
 
         try {
             Message message = new MimeMessage(session);
 
-            message.setFrom(new InternetAddress(FROM_EMAIL));
+            message.setFrom(new InternetAddress(env.getProperty("mail.from-email")));
             message.setRecipients(Message.RecipientType.TO,
                     InternetAddress.parse(email));
 
-            message.setSubject(EMAIL_SUBJECT);
-            message.setText("Hello " + firstName + ", \n \n Your new account password is: " + password + "\n \n " +
-                "The support team");
+            message.setSubject(Translator.toLocale("EMAIL_SUBJECT"));
+
+            String content = EMAIL_CONTENT;
+            content = content.replace("{username}", firstName);
+            content = content.replace("{pwd}", password);
+            content = content.replace("{registerResetPwd}", Translator.toLocale("REGISTER_RESET_PWD"));
+            content = content.replace("{thePasswordIs}", Translator.toLocale("THE_PASSWORD_IS"));
+
+            message.setContent(content, "text/html; charset=UTF-8");
 
             Transport.send(message);
 
