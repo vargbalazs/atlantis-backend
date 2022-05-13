@@ -17,6 +17,8 @@ public class SecurityConstant {
             "/api/user/signup",
             "/api/user/forgotpassword/{email}",
             "/api/user/usernameexists/{username}",
-            "/api/user/useremailexists/{useremail}"
+            "/api/user/useremailexists/{useremail}",
+            "/wakeup"
+
     };
 }
