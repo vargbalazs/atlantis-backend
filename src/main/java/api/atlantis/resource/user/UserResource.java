@@ -122,6 +122,7 @@ public class UserResource extends ExceptionHandling {
     @GetMapping("/forgotpassword/{email}")
     public ResponseEntity<HttpResponse> forgotPassword(@PathVariable("email") String email) throws EmailNotFoundException {
         AppUser appUser = userService.findUserByEmail(email);
+        if (appUser == null) throw new EmailNotFoundException(Translator.toLocale("NO_USER_FOUND_BY_EMAIL"));
         userService.resetPassword(appUser.getEmail());
         return response(HttpStatus.OK, Translator.toLocale("EMAIL_SENT") + appUser.getEmail());
     }
